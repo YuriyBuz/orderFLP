@@ -266,11 +266,41 @@
             showToast('Збереження тимчасово вимкнено.', 'error');
         }
 
-        async function generatePDFBlob() {
+        async function shareOrder() {
+            const activeOrderItems = getActiveOrderItems();
+            if (activeOrderItems.length === 0) return showToast('Замовлення порожнє, нічого надсилати.', 'error');
+            if (!customerInfo.address || !customerInfo.contact) return showToast('Будь ласка, заповніть адресу та контактну особу.', 'error');
+
+            const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
+            let orderText = `*НОВЕ ЗАМОВЛЕННЯ*\n\n` +
+                            `*Адреса:* ${customerInfo.address}\n` +
+                            `*Контакт:* ${customerInfo.contact}\n` +
+                            (customerInfo.comment ? `*Коментар:* ${customerInfo.comment}\n` : '') +
+                            `--------------------\n` +
+                            activeOrderItems.map(item => `• ${item.name} (ціна: ${item.price.toFixed(2)} грн) - ${item.quantity} ящ. (${item.total_pcs} шт.)`).join('\n') +
+                            `\n--------------------\n` +
+                            `*Всього до сплати: ${grandTotal.toFixed(2)} грн*`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Замовлення',
+                        text: orderText,
+                    });
+                } catch (error) {
+                    console.error('Error sharing:', error);
+                    showToast('Помилка під час надсилання.', 'error');
+                }
+            } else {
+                showToast('Надсилання не підтримується на цьому пристрої.', 'error');
+            }
+        }
+        
+        async function generatePDF() {
             const activeOrderItems = getActiveOrderItems();
             if (activeOrderItems.length === 0) {
                 showToast('Немає чого зберігати. Замовлення порожнє.', 'error');
-                return null;
+                return;
             }
             
             const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
@@ -303,7 +333,7 @@
                 </div>`;
 
             el('#pdf-content').innerHTML = orderHtml;
-            const canvas = await html2canvas(el('#pdf-content'));
+            const canvas = await html2canvas(el('#pdf-content'), { scale: 2 });
             el('#pdf-content').innerHTML = '';
 
             const imgData = canvas.toDataURL('image/png');
@@ -312,49 +342,8 @@
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            return pdf.output('blob');
-        }
-
-        async function shareOrder() {
-            const activeOrderItems = getActiveOrderItems();
-            if (activeOrderItems.length === 0) return showToast('Замовлення порожнє, нічого надсилати.', 'error');
-            if (!customerInfo.address || !customerInfo.contact) return showToast('Будь ласка, заповніть адресу та контактну особу.', 'error');
-
-            showToast('Створюю PDF для надсилання...', 'success');
             
-            const pdfBlob = await generatePDFBlob();
-            if (!pdfBlob) return;
-
-            const pdfFile = new File([pdfBlob], `order-${new Date().toISOString().slice(0,10)}.pdf`, { type: "application/pdf" });
-
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                try {
-                    await navigator.share({
-                        title: 'Замовлення',
-                        text: `Замовлення від ${new Date().toLocaleDateString('uk-UA')}`,
-                        files: [pdfFile],
-                    });
-                } catch (error) {
-                    console.error('Error sharing:', error);
-                    showToast('Помилка під час надсилання.', 'error');
-                }
-            } else {
-                showToast('Надсилання PDF не підтримується. Збережіть та надішліть файл вручну.', 'error');
-            }
-        }
-        
-        async function generatePDF() {
-            const pdfBlob = await generatePDFBlob();
-            if (!pdfBlob) return;
-
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `order-${new Date().toISOString().slice(0,10)}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            pdf.save(`order-${new Date().toISOString().slice(0,10)}.pdf`);
         }
         
         // --- Event Listeners & Initialization ---
