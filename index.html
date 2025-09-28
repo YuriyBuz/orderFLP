@@ -112,11 +112,6 @@
     </div>
 
     <script type="module">
-        // --- Firebase SDK Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
         // --- Configuration ---
         const GITHUB_EXCEL_URL = 'https://raw.githubusercontent.com/YuriyBuz/orderFLP/main/%D0%9F%D1%80%D0%B0%D0%B9%D1%81%20%D0%B4%D0%BB%D1%8F%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%BD%D0%B8%D0%BA%D0%B0%20(13).xls';
         
@@ -125,52 +120,7 @@
         let order = {};
         let customerInfo = {};
         
-        let db, auth, userId;
-        
         const el = (selector) => document.querySelector(selector);
-
-        // --- Firebase Functions ---
-        async function initializeFirebase() {
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfigJSON = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-
-                if (!firebaseConfigJSON || firebaseConfigJSON === '{}') {
-                    console.warn("Firebase config is missing. Database features will be disabled.");
-                    return;
-                }
-                const firebaseConfig = JSON.parse(firebaseConfigJSON);
-
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                return new Promise((resolve) => {
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            userId = user.uid;
-                            console.log("User is signed in with UID:", userId);
-                            resolve();
-                        } else {
-                            try {
-                                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                                if (token) {
-                                    await signInWithCustomToken(auth, token);
-                                } else {
-                                    await signInAnonymously(auth);
-                                }
-                            } catch (error) {
-                                console.error("Authentication failed:", error);
-                                resolve(); 
-                            }
-                        }
-                    });
-                });
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
-        }
 
         // --- Core Functions ---
         function renderProducts() {
@@ -359,36 +309,6 @@
             if (!customerInfo.address || !customerInfo.contact) return showToast('Будь ласка, заповніть адресу та контактну особу.', 'error');
 
             const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
-
-            // --- Save to Firestore ---
-            if (db && userId) {
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    const orderCollectionPath = `/artifacts/${appId}/public/data/orders`;
-                    
-                    const orderData = {
-                        userId: userId,
-                        customerInfo: customerInfo,
-                        items: activeOrderItems,
-                        grandTotal: grandTotal,
-                        createdAt: serverTimestamp()
-                    };
-
-                    const docRef = await addDoc(collection(db, orderCollectionPath), orderData);
-                    console.log("Order saved with ID: ", docRef.id);
-                    showToast('Замовлення збережено в базі!', 'success');
-
-                } catch (error) {
-                    console.error("Error saving order to Firestore: ", error);
-                    showToast('Помилка збереження замовлення.', 'error');
-                    return; 
-                }
-            } else {
-                console.warn("Firestore is not initialized, skipping database save.");
-                showToast('База даних не ініціалізована.', 'error');
-                return;
-            }
-            // --- End of Save to Firestore ---
             
             let orderText = `*НОВЕ ЗАМОВЛЕННЯ*\n\n` +
                               `*Адреса:* ${customerInfo.address}\n` +
@@ -511,10 +431,7 @@
                 el('#current-date').textContent = new Date().toLocaleDateString('uk-UA', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
                 loadStateFromLocalStorage();
                 setupEventListeners();
-                
-                updateStatus('Ініціалізація бази даних...');
-                await initializeFirebase();
-                
+                                
                 updateStatus('Завантаження товарів з GitHub...');
                 await loadProductsFromGitHub();
 
