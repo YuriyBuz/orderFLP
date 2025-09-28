@@ -72,6 +72,10 @@
                 <span id="grand-total" class="text-xl font-bold text-blue-600 ml-2">0.00 грн</span>
             </div>
             <div class="flex space-x-2 md:space-x-3">
+                 <button id="reset-order" class="px-3 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition-colors flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <span class="hidden md:inline">Скинути</span>
+                </button>
                  <button id="share-order" class="px-3 py-2 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition-colors flex items-center space-x-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
                     <span class="hidden md:inline">Надіслати</span>
@@ -178,7 +182,7 @@
                     sku: String(row[0] || ''),
                     name: String(row[1] || 'Без назви'),
                     perBox: parseInt(row[2], 10) || 1,
-                    price: parseFloat(String(row[3]).replace(',', '.')) || 0.0,
+                    price: parseFloat(String(row[3]).replace(',', '.')) || 0.00,
                     imageUrl: String(row[4] || '')
                 };
             }).filter(p => p && p.sku && p.name);
@@ -246,9 +250,69 @@
                 };
             }).filter(Boolean);
         }
+        
+        function resetOrder() {
+            order = {};
+            customerInfo = {};
+            el('#delivery-address').value = '';
+            el('#contact-person').value = '';
+            el('#order-comment').value = '';
+            saveStateToLocalStorage();
+            renderProducts();
+            showToast('Замовлення скинуто.', 'success');
+        }
 
         async function submitOrder() {
             showToast('Збереження тимчасово вимкнено.', 'error');
+        }
+
+        async function generatePDFBlob() {
+            const activeOrderItems = getActiveOrderItems();
+            if (activeOrderItems.length === 0) {
+                showToast('Немає чого зберігати. Замовлення порожнє.', 'error');
+                return null;
+            }
+            
+            const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
+            const orderHtml = `
+                <div style="font-family: sans-serif; padding: 20px; color: #333; width: 210mm;">
+                    <h1 style="text-align: center; color: #1a1a1a;">Замовлення від ${new Date().toLocaleDateString('uk-UA')}</h1><hr style="margin: 20px 0;">
+                    <h2 style="color: #1a1a1a;">Деталі доставки:</h2>
+                    <p><strong>Адреса:</strong> ${customerInfo.address || 'Не вказано'}</p>
+                    <p><strong>Контактна особа:</strong> ${customerInfo.contact || 'Не вказано'}</p>
+                    <p><strong>Коментар:</strong> ${customerInfo.comment || 'Немає'}</p><hr style="margin: 20px 0;">
+                    <h2 style="color: #1a1a1a;">Товари:</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <thead><tr style="background-color: #f2f2f2;">
+                            <th style="padding: 5px; border: 1px solid #ddd; text-align: left;">Найменування</th>
+                            <th style="padding: 5px; border: 1px solid #ddd; text-align: right;">Ціна за шт.</th>
+                            <th style="padding: 5px; border: 1px solid #ddd; text-align: right;">К-ть (ящ)</th>
+                            <th style="padding: 5px; border: 1px solid #ddd; text-align: right;">Сума</th>
+                        </tr></thead>
+                        <tbody>
+                            ${activeOrderItems.map(item => `
+                                <tr>
+                                    <td style="padding: 5px; border: 1px solid #ddd;">${item.name}</td>
+                                    <td style="padding: 5px; border: 1px solid #ddd; text-align: right;">${item.price.toFixed(2)}</td>
+                                    <td style="padding: 5px; border: 1px solid #ddd; text-align: right;">${item.quantity}</td>
+                                    <td style="padding: 5px; border: 1px solid #ddd; text-align: right;">${item.subtotal.toFixed(2)}</td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                    <h2 style="text-align: right; margin-top: 20px; color: #1a1a1a;">Всього: ${grandTotal.toFixed(2)} грн</h2>
+                </div>`;
+
+            el('#pdf-content').innerHTML = orderHtml;
+            const canvas = await html2canvas(el('#pdf-content'));
+            el('#pdf-content').innerHTML = '';
+
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            return pdf.output('blob');
         }
 
         async function shareOrder() {
@@ -256,39 +320,41 @@
             if (activeOrderItems.length === 0) return showToast('Замовлення порожнє, нічого надсилати.', 'error');
             if (!customerInfo.address || !customerInfo.contact) return showToast('Будь ласка, заповніть адресу та контактну особу.', 'error');
 
-            const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
-            let orderText = `*НОВЕ ЗАМОВЛЕННЯ*\n\n` +
-                            `*Адреса:* ${customerInfo.address}\n` +
-                            `*Контакт:* ${customerInfo.contact}\n` +
-                            (customerInfo.comment ? `*Коментар:* ${customerInfo.comment}\n` : '') +
-                            `--------------------\n` +
-                            activeOrderItems.map(item => `• ${item.name} - ${item.quantity} ящ. (${item.total_pcs} шт.)`).join('\n') +
-                            `\n--------------------\n` +
-                            `*Всього до сплати: ${grandTotal.toFixed(2)} грн*`;
+            showToast('Створюю PDF для надсилання...', 'success');
+            
+            const pdfBlob = await generatePDFBlob();
+            if (!pdfBlob) return;
 
-            if (navigator.share) {
-                try { await navigator.share({ title: 'Замовлення', text: orderText }); } catch (error) { console.error('Error sharing:', error); }
-            } else { showToast('Надсилання не підтримується на цьому пристрої.', 'error'); }
+            const pdfFile = new File([pdfBlob], `order-${new Date().toISOString().slice(0,10)}.pdf`, { type: "application/pdf" });
+
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                try {
+                    await navigator.share({
+                        title: 'Замовлення',
+                        text: `Замовлення від ${new Date().toLocaleDateString('uk-UA')}`,
+                        files: [pdfFile],
+                    });
+                } catch (error) {
+                    console.error('Error sharing:', error);
+                    showToast('Помилка під час надсилання.', 'error');
+                }
+            } else {
+                showToast('Надсилання PDF не підтримується. Збережіть та надішліть файл вручну.', 'error');
+            }
         }
         
-        function generatePDF() {
-            const activeOrderItems = getActiveOrderItems();
-            if (activeOrderItems.length === 0) return showToast('Немає чого зберігати. Замовлення порожнє.', 'error');
-            
-            const grandTotal = activeOrderItems.reduce((acc, item) => acc + item.subtotal, 0);
-            const orderHtml = `...`; // Content omitted for brevity
-            el('#pdf-content').innerHTML = orderHtml;
+        async function generatePDF() {
+            const pdfBlob = await generatePDFBlob();
+            if (!pdfBlob) return;
 
-            html2canvas(el('#pdf-content')).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`order-${new Date().toISOString().slice(0,10)}.pdf`);
-                el('#pdf-content').innerHTML = '';
-            });
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `order-${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
         
         // --- Event Listeners & Initialization ---
@@ -318,6 +384,7 @@
             el('#submit-order').addEventListener('click', submitOrder);
             el('#save-pdf').addEventListener('click', generatePDF);
             el('#share-order').addEventListener('click', shareOrder);
+            el('#reset-order').addEventListener('click', resetOrder);
         }
         
         function showToast(message, type = 'success') {
@@ -364,5 +431,4 @@
     </script>
 </body>
 </html>
-
 
