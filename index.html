@@ -178,7 +178,7 @@
                     sku: String(row[0] || ''),
                     name: String(row[1] || 'Без назви'),
                     perBox: parseInt(row[2], 10) || 1,
-                    price: parseFloat(String(row[3]).replace(',', '.')) || 0.00,
+                    price: parseFloat(String(row[3]).replace(',', '.')) || 0.0,
                     imageUrl: String(row[4] || '')
                 };
             }).filter(p => p && p.sku && p.name);
@@ -364,4 +364,5 @@
     </script>
 </body>
 </html>
+
 
