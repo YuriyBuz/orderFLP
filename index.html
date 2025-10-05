@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Замовлення соусів</title>
+    <title>Замовлення соусів Food line Production</title>
     <link rel="icon" href="https://foodline-production.com/wp-content/uploads/2021/10/cropped-favicon-32x32.png" sizes="32x32">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Використовуємо XLSX для парсингу Excel файлу -->
@@ -33,22 +33,22 @@
     <div id="app" class="max-w-4xl mx-auto p-4 md:p-6 pb-32 min-h-screen">
 
         <!-- Header Container -->
-        <div class="bg-gray-100 sticky top-0 z-20 pt-4 pb-2">
+        <div id="header-container" class="bg-gray-100 sticky top-0 z-30 pt-3 pb-1 transition-transform duration-300">
             <!-- Header -->
             <header class="flex justify-between items-center mb-4">
                 <div class="flex items-center space-x-4">
                     <!-- Logo and Title -->
                     <img src="https://foodline-production.com/wp-content/uploads/2021/10/3752781497_3752781497.webp" alt="Food Line Production Logo" class="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg shadow-md" onerror="this.onerror=null;this.src='https://placehold.co/80x80/eee/333?text=Logo';">
                     <div>
-                         <h1 class="text-2xl font-bold text-gray-800 hidden md:block">Замовлення соусів та продуктів</h1>
+                         <h1 class="text-2xl font-bold text-gray-800 hidden md:block">Замовлення соусів Food line Production</h1>
                          <p id="current-date" class="text-sm text-gray-600 mt-1"></p>
                     </div>
                 </div>
             </header>
 
             <!-- Search Bar -->
-            <div class="relative mb-6">
-                <input type="text" id="search-input" placeholder="Пошук за назвою..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+            <div class="relative mb-4">
+                <input type="text" id="search-input" placeholder="Пошук за назвою..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl shadow-inner focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-shadow">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
@@ -70,15 +70,15 @@
             <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Деталі замовлення</h2>
             <div>
                 <label for="delivery-address" class="block text-sm font-medium mb-1">Адреса доставки</label>
-                <input type="text" id="delivery-address" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Місто, вулиця, будинок">
+                <input type="text" id="delivery-address" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="Місто, вулиця, будинок">
             </div>
             <div>
                 <label for="contact-person" class="block text-sm font-medium mb-1">Контактна особа</label>
-                <input type="text" id="contact-person" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Ім'я та телефон">
+                <input type="text" id="contact-person" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="Ім'я та телефон">
             </div>
             <div>
                 <label for="order-comment" class="block text-sm font-medium mb-1">Коментар до замовлення</label>
-                <textarea id="order-comment" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Будь-які побажання"></textarea>
+                <textarea id="order-comment" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="Будь-які побажання"></textarea>
             </div>
         </section>
 
@@ -87,18 +87,18 @@
     <!-- Floating Footer Bar -->
     <footer id="footer-bar" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-4 shadow-2xl transition-transform translate-y-full duration-500 z-40">
         <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
-            <div class="text-center md:text-left">
+            <div class="flex justify-center md:justify-start items-center">
                 <span class="text-lg font-medium text-gray-700">Всього:</span>
-                <span id="grand-total" class="text-2xl font-extrabold text-blue-600 ml-2 block md:inline-block">0.00 грн</span>
+                <span id="grand-total" class="text-2xl font-extrabold text-blue-600 ml-2">0.00 грн</span>
             </div>
             <div class="flex space-x-3 w-full md:w-auto">
-                <button id="reset-order" class="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-xl shadow-md hover:bg-red-600 transition-colors flex items-center justify-center space-x-2">
+                <button id="reset-order" class="flex-1 px-4 py-3 bg-orange-500 text-white font-semibold rounded-xl shadow-md hover:bg-orange-600 transition-colors flex items-center justify-center space-x-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    <span class="text-lg">Скинути</span>
+                    <span class="text-base">Скасувати замовлення</span>
                 </button>
-                <button id="share-order" class="flex-1 px-4 py-3 bg-yellow-500 text-white font-semibold rounded-xl shadow-md hover:bg-yellow-600 transition-colors flex items-center justify-center space-x-2">
+                <button id="share-order" class="flex-1 px-4 py-3 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center space-x-2" style="background-color: #6ab04c;" onmouseover="this.style.backgroundColor='#5a943f'" onmouseout="this.style.backgroundColor='#6ab04c'">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.368a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
-                    <span class="text-lg">Надіслати</span>
+                    <span class="text-base">Надіслати замовлення</span>
                 </button>
             </div>
         </div>
@@ -217,7 +217,7 @@
                 <div class="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-3 items-center product-item cursor-pointer" data-sku="${p.sku}" data-name="${p.name.toLowerCase()}" data-image-url="${p.imageUrl || ''}">
                     <!-- Product Info (Col 1-8) -->
                     <div class="col-span-1 md:col-span-8 flex flex-col sm:flex-row sm:items-center space-x-3">
-                        <img src="${p.imageUrl}" alt="${p.name}" class="w-12 h-12 object-contain rounded-lg shadow-inner mr-2 sm:mr-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/60A5FA/FFF?text=ITEM';">
+                        <img src="${p.imageUrl}" alt="${p.name}" class="w-12 h-12 object-contain rounded-lg shadow-inner mr-2 sm:mr-0" onerror="this.onerror=null;this.src='https://placehold.co/48x48/A7F3D0/000?text=ITEM';">
                         <div>
                             <p class="font-bold text-lg text-gray-800">${p.name}</p>
                             <p class="text-sm text-gray-600 space-x-2">
@@ -231,7 +231,7 @@
                     <!-- Order Input & Subtotal (Col 9-12) -->
                     <div class="col-span-1 md:col-span-4 flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <input type="number" class="quantity-input w-16 md:w-20 p-2 border border-blue-400 rounded-lg text-center font-semibold focus:border-blue-600 focus:ring-1 focus:ring-blue-600" placeholder="0" min="0" value="${quantityValue}" data-sku="${p.sku}">
+                            <input type="number" class="quantity-input w-20 md:w-20 p-2 border border-blue-400 rounded-lg text-center font-semibold text-2xl md:text-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500" placeholder="0" min="0" value="${quantityValue}" data-sku="${p.sku}">
                             <span class="text-base text-gray-600">ящ.</span>
                             <div class="flex flex-col items-center ml-2">
                                 <span class="text-xs text-gray-500">Кількість</span>
@@ -240,7 +240,7 @@
                         </div>
                         <div class="flex flex-col items-end">
                             <span class="text-sm font-semibold text-gray-700">Ціна: ${p.price.toFixed(2)} грн</span>
-                            <div class="text-right text-xl font-bold text-blue-600 subtotal">
+                            <div class="text-right text-3xl md:text-2xl font-bold text-blue-600 subtotal">
                                 ${subtotal.toFixed(2)}
                             </div>
                         </div>
@@ -250,7 +250,7 @@
 
             return `
             <div class="product-group">
-                <h2 class="text-xl font-extrabold mb-3 text-gray-700 sticky top-24 md:top-28 p-3 bg-gray-100/90 border-b-2 border-blue-400 backdrop-blur-sm rounded-lg z-10 shadow-sm">${group.groupName}</h2>
+                <h2 class="text-xl font-extrabold mb-3 text-gray-700 sticky top-24 md:top-28 p-3 bg-gray-100/90 border-b-2 backdrop-blur-sm rounded-lg z-10 shadow-sm transition-all duration-300" style="border-color: #FF5800;">${group.groupName}</h2>
                 <div class="space-y-3">
                     ${productItemsHTML}
                 </div>
@@ -579,6 +579,28 @@
             loadStateFromLocalStorage();
             setupEventListeners();
             
+            // --- Auto-hiding Header Logic ---
+            const headerContainer = el('#header-container');
+            let lastScrollTop = 0;
+            window.addEventListener('scroll', () => {
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                if (scrollTop > lastScrollTop && scrollTop > headerContainer.offsetHeight) {
+                    // Scroll Down
+                    headerContainer.classList.add('-translate-y-full');
+                    document.querySelectorAll('.product-group h2').forEach(h2 => {
+                        h2.style.top = '0px';
+                    });
+                } else {
+                    // Scroll Up
+                    headerContainer.classList.remove('-translate-y-full');
+                    document.querySelectorAll('.product-group h2').forEach(h2 => {
+                        h2.style.top = ''; // Reset style to use Tailwind classes
+                    });
+                }
+                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+            }, { passive: true });
+
+
             updateStatus('Завантаження товарів з зовнішнього джерела...');
             await loadProductsFromGitHub();
             
